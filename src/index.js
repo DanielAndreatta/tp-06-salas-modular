@@ -1,3 +1,4 @@
+
 const express = require("express");
 const expressLayouts = require("express-ejs-layouts");
 const morgan = require("morgan");
@@ -13,19 +14,21 @@ const {
     validarReserva
 } = require("./middleware/reservas");
 
+const { crearServicioReservas } = require("./servicios/reservas");
+
 const app = express();
 const PORT = 3000;
 
-// Datos iniciales en memoria
-const salasPermitidas = ["Sala Norte", "Sala Sur", "Sala Multimedia"];
-const turnosPermitidos = ["Mañana", "Tarde", "Noche"];
-
-let reservas = [
+// Extraemos los datos iniciales
+const reservasIniciales = [
     { id: 1, estudiante: "Ana López", email: "ana@ejemplo.com", sala: "Sala Norte", fecha: "2026-10-01", turno: "Mañana", personas: 2 },
     { id: 2, estudiante: "Carlos Ruiz", email: "carlos@ejemplo.com", sala: "Sala Multimedia", fecha: "2026-10-02", turno: "Tarde", personas: 5 },
     { id: 3, estudiante: "María Soler", email: "maria@ejemplo.com", sala: "Sala Sur", fecha: "2026-10-03", turno: "Noche", personas: 3 },
     { id: 4, estudiante: "Juan Pérez", email: "juan@ejemplo.com", sala: "Sala Norte", fecha: "2026-10-04", turno: "Mañana", personas: 1 }
 ];
+
+// Instanciamos el servicio compartiendo la semilla
+const servicioReservas = crearServicioReservas(reservasIniciales);
 
 // * Middleware global
 app.use(morgan("dev"));
@@ -50,27 +53,36 @@ app.get("/", (req, res) => {
 app.get("/estado", (req, res) => {
     res.json({
         servicio: "activo",
-        reservas: reservas.length,
+        reservas: servicioReservas.contar(), // Llamada al servicio
         solicitudId: res.locals.solicitudId
     });
 });
 
 // **** Router de reservas
 const reservasRouter = express.Router();
-
 reservasRouter.use(prepararAreaReservas);
 
 reservasRouter.get("/", (req, res) => {
-    res.render("reservas/lista", { titulo: "Salas reservadas", reservas });
+    // Llamada al servicio
+    res.render("reservas/lista", { titulo: "Salas reservadas", reservas: servicioReservas.listar() });
 });
 
 reservasRouter.get("/nueva", (req, res) => {
-    res.render("reservas/nueva", { titulo: "Nueva Reserva", error: null, valores: {}, salasPermitidas, turnosPermitidos });
+    // Nota: enviamos los datos permitidos quemados para la vista o podemos delegarlo.
+    // Como los definiste en el middleware y en la vista, los pasaremos directamente aquí:
+    res.render("reservas/nueva", {
+        titulo: "Nueva Reserva",
+        error: null,
+        valores: {},
+        salasPermitidas: ["Sala Norte", "Sala Sur", "Sala Multimedia"],
+        turnosPermitidos: ["Mañana", "Tarde", "Noche"]
+    });
 });
 
 reservasRouter.get("/:id", (req, res) => {
     const id = Number(req.params.id);
-    const reserva = reservas.find((r) => r.id === id);
+    const reserva = servicioReservas.obtenerPorId(id); // Llamada al servicio
+
     if (!reserva) {
         return res.status(404).render("no-encontrado", {
             titulo: "Reserva no encontrada",
@@ -81,8 +93,7 @@ reservasRouter.get("/:id", (req, res) => {
 });
 
 function crearReserva(req, res) {
-    const ultimoId = reservas.reduce((maxId, r) => Math.max(maxId, r.id), 0);
-    reservas.push({ id: ultimoId + 1, ...req.reservaValidada });
+    servicioReservas.crear(req.reservaValidada); // Llamada al servicio
     res.redirect("/reservas");
 }
 

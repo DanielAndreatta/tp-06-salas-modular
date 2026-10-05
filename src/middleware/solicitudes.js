@@ -1,5 +1,4 @@
 
-// src/middleware/solicitudes.js
 function crearIdentificadorSolicitud() {
     let numeroDeSolicitud = 0;
     return function identificarSolicitud(req, res, next) {

@@ -1,6 +1,4 @@
 
-// src/middleware/reservas.js
-
 // Datos iniciales en memoria
 const salasPermitidas = ["Sala Norte", "Sala Sur", "Sala Multimedia"];
 const turnosPermitidos = ["Mañana", "Tarde", "Noche"];
@@ -12,7 +10,7 @@ function prepararAreaReservas(req, res, next) {
 
 function validarReserva(req, res, next) {
     const valores = req.body ?? {};
-    
+
     const estudiante = String(valores.estudiante ?? "").trim();
     const email = String(valores.email ?? "").trim();
     const sala = String(valores.sala ?? "").trim();
