@@ -12,7 +12,7 @@ const {
 const { crearControladorReservas } = require("./controladores/reservas");
 const { crearRouterReservas } = require("./rutas/reservas");
 
-function crearApp({ servicioReservas }) {
+function crearApp({ servicioReservas, formatoRegistro }) {
     const app = express();
     
     // Instanciamos controlador y router
@@ -25,7 +25,7 @@ function crearApp({ servicioReservas }) {
     app.set("layout", "layouts/main");
 
     // Pipeline de middleware global
-    app.use(morgan("dev"));
+    app.use(morgan(formatoRegistro));    // inyectamos el formato dinámico
     app.use(crearIdentificadorSolicitud());
     app.use(medirDuracion);
     app.use(expressLayouts);

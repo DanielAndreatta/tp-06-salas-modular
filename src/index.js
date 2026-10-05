@@ -1,8 +1,7 @@
 
+const { leerConfiguracion } = require("./configuracion");
 const { crearServicioReservas } = require("./servicios/reservas");
 const { crearApp } = require("./app");
-
-const PORT = 3000;
 
 // Semilla inicial
 const reservasIniciales = [
@@ -13,22 +12,24 @@ const reservasIniciales = [
 ];
 
 function main() {
-    // 1. Crear el servicio con los datos iniciales
-    const servicioReservas = crearServicioReservas(reservasIniciales);
-    
-    // 2. Crear la aplicación Express
-    const app = crearApp({ servicioReservas });
+    // 1. Leer y validar la configuración del entorno
+    const { puerto, formatoRegistro } = leerConfiguracion();
 
-    // 3. Arrancar el proceso
-    app.listen(PORT, () => {
-        console.log(`Aplicación disponible en http://localhost:${PORT}`);
+    // 2. Crear el servicio con los datos iniciales
+    const servicioReservas = crearServicioReservas(reservasIniciales);
+
+    // 3. Crear la aplicación Express inyectando dependencias
+    const app = crearApp({ servicioReservas, formatoRegistro });
+
+    // 4. Arrancar el proceso en el puerto validado
+    app.listen(puerto, () => {
+        console.log(`Aplicación disponible en http://localhost:${puerto}`);
     });
 }
 
-// Ejecutamos la función principal y capturamos posibles errores
 try {
     main();
 } catch (error) {
-    console.error("No se pudo iniciar la aplicación:", error);
+    console.error("No se pudo iniciar la aplicación:", error.message);
     process.exitCode = 1;
 }
