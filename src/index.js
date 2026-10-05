@@ -9,13 +9,10 @@ const {
     medirDuracion
 } = require("./middleware/solicitudes");
 
-const {
-    prepararAreaReservas,
-    validarReserva
-} = require("./middleware/reservas");
-
+// Solo importamos las fábricas de servicio, controlador y router
 const { crearServicioReservas } = require("./servicios/reservas");
 const { crearControladorReservas } = require("./controladores/reservas");
+const { crearRouterReservas } = require("./rutas/reservas");
 
 const app = express();
 const PORT = 3000;
@@ -27,9 +24,10 @@ const reservasIniciales = [
     { id: 4, estudiante: "Juan Pérez", email: "juan@ejemplo.com", sala: "Sala Norte", fecha: "2026-10-04", turno: "Mañana", personas: 1 }
 ];
 
+// Instanciamos el servicio, el controlador y el router en cadena
 const servicioReservas = crearServicioReservas(reservasIniciales);
-// Inyectamos el servicio en el controlador
 const controladorReservas = crearControladorReservas(servicioReservas);
+const reservasRouter = crearRouterReservas(controladorReservas);
 
 // * Middleware global
 app.use(morgan("dev"));
@@ -51,19 +49,9 @@ app.get("/", (req, res) => {
     res.render("inicio", { titulo: "Reserva de Salas" });
 });
 
-// Usamos el método estado del controlador
 app.get("/estado", controladorReservas.estado);
 
-// **** Router de reservas
-const reservasRouter = express.Router();
-reservasRouter.use(prepararAreaReservas);
-
-// Sustituimos las funciones inline por los métodos del controlador
-reservasRouter.get("/", controladorReservas.listar);
-reservasRouter.get("/nueva", controladorReservas.mostrarFormulario);
-reservasRouter.get("/:id", controladorReservas.mostrarDetalle);
-reservasRouter.post("/", validarReserva, controladorReservas.crear);
-
+// **** Montaje del router de reservas
 app.use("/reservas", reservasRouter);
 
 // ***** Middleware de página 404
